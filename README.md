@@ -1,6 +1,6 @@
 # Zeno - AI Task Focus Extension
 
-<<<<<<< HEAD
+
 Zeno is a Chrome extension that helps you stay focused on your task by automatically blocking irrelevant websites and filtering YouTube distractions.
 
 ## Features
@@ -53,7 +53,7 @@ Zeno is a powerful browser extension designed to help you maintain deep focus by
 
 ### 2. Download the Code
 ```bash
-git clone https://github.com/yourusername/zeno.git
+git clone https://github.com/saurish-0x/zeno.git
 cd zeno/Code/Beta\ V.10
 ```
 
@@ -116,4 +116,3 @@ This error happens because Firefox Manifest V3 does not support Service Workers 
   - Firefox treats background scripts differently from Chrome's Service Workers. We use a unified codebase, but ensure you use the correct manifest to load the right background environment.
 
 
->>>>>>> master

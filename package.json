@@ -1,0 +1,12 @@
+{
+  "name": "focus-filter",
+  "version": "1.0.0",
+  "description": "Chrome extension to check website relevance using GEMMA AI",
+  "scripts": {
+    "dev": "web-ext run --target chromium",
+    "build": "web-ext build"
+  },
+  "devDependencies": {
+    "web-ext": "^7.11.0"
+  }
+}

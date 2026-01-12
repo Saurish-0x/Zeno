@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Zeno</title>
+  <meta charset="UTF-8">
+  <style>
+    :root {
+      --primary: #4f46e5;
+      --primary-hover: #4338ca;
+      --danger: #ef4444;
+      --danger-hover: #dc2626;
+      --success: #10b981;
+      --bg: #ffffff;
+      --text: #1f2937;
+      --text-light: #6b7280;
+      --border: #e5e7eb;
+      --section-bg: #f9fafb;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      padding: 0;
+      margin: 0;
+      width: 350px;
+      background-color: var(--bg);
+      color: var(--text);
+    }
+
+    .container {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    h1 {
+      font-size: 24px;
+      font-weight: 800;
+      margin: 0;
+      color: var(--primary);
+      text-align: center;
+      letter-spacing: -0.025em;
+    }
+
+    .section {
+      background-color: var(--section-bg);
+      border: 1px solid var(--border);
+      padding: 16px;
+      border-radius: 12px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+
+    .section h2 {
+      font-size: 14px;
+      font-weight: 600;
+      margin: 0 0 12px 0;
+      color: var(--text-light);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    input[type="text"], 
+    input[type="password"] {
+      width: 100%;
+      padding: 10px 12px;
+      box-sizing: border-box;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    }
+
+    button {
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      padding: 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
+      width: 100%;
+      transition: background-color 0.2s, transform 0.1s;
+    }
+
+    button:hover {
+      background-color: var(--primary-hover);
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    #stop-task-btn {
+      background-color: var(--danger);
+    }
+    
+    #stop-task-btn:hover {
+      background-color: var(--danger-hover);
+    }
+
+    .status {
+      margin-top: 10px;
+      padding: 8px;
+      border-radius: 6px;
+      display: none;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .success {
+      background-color: #ecfdf5;
+      color: #065f46;
+      border: 1px solid #a7f3d0;
+    }
+
+    .error {
+      background-color: #fef2f2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+    }
+
+    .keyword-stats {
+      font-size: 12px;
+      color: var(--text-light);
+      margin-bottom: 8px;
+      text-align: center;
+    }
+
+    /* Progress bar styling */
+    #progress-container {
+      margin-top: 12px;
+    }
+
+    .progress-track {
+      background-color: #e5e7eb;
+      border-radius: 999px;
+      height: 6px;
+      overflow: hidden;
+    }
+
+    #progress-bar {
+      width: 0%;
+      height: 100%;
+      background-color: var(--success);
+      transition: width 0.3s ease;
+    }
+
+    #progress-text {
+      font-size: 11px;
+      color: var(--text-light);
+      text-align: center;
+      margin-top: 6px;
+    }
+    
+    /* Toggle switch styles */
+    .toggle-container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .toggle-container span {
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 40px;
+      height: 22px;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #d1d5db;
+      transition: .3s;
+      border-radius: 22px;
+    }
+
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 16px;
+      width: 16px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .3s;
+      border-radius: 50%;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+
+    input:checked+.toggle-slider {
+      background-color: var(--primary);
+    }
+
+    input:checked+.toggle-slider:before {
+      transform: translateX(18px);
+    }
+
+    hr {
+      margin: 16px 0;
+      border: 0;
+      border-top: 1px solid var(--border);
+    }
+
+    .api-key-section label {
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      display: block;
+      color: var(--text-light);
+    }
+
+    .api-input-group {
+      display: flex;
+      gap: 8px;
+    }
+
+    #saveApiKeyBtn {
+      width: auto;
+      padding: 0 16px;
+      background-color: #374151;
+    }
+    
+    #saveApiKeyBtn:hover {
+      background-color: #1f2937;
+    }
+
+    #apiKeyStatus {
+      font-size: 11px;
+      margin-top: 6px;
+      height: 15px;
+      text-align: center;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 4px;">
+      <h1>Zeno</h1>
+      <span style="font-size: 10px; font-weight: 700; background: #e0e7ff; color: var(--primary); padding: 2px 6px; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.05em;">Beta V.10</span>
+    </div>
+
+    <!-- Task Section -->
+    <div class="section">
+      <h2>Current Task</h2>
+      <input type="text" id="task" placeholder="What are you working on?">
+      <div class="keyword-stats" id="keyword-stats"></div>
+      
+      <div id="action-buttons">
+        <button id="start-task-btn">Start Task</button>
+        <button id="stop-task-btn" style="display: none;">Stop Task</button>
+      </div>
+      
+      <!-- Progress Bar -->
+      <div id="progress-container" style="display: none;">
+        <div class="progress-track">
+          <div id="progress-bar"></div>
+        </div>
+        <div id="progress-text">Starting...</div>
+      </div>
+      <div class="status" id="status-task"></div>
+    </div>
+
+    <!-- Zeno Settings -->
+    <div class="section">
+      <h2>Settings</h2>
+      
+      <div class="toggle-container">
+        <span>YouTube Search Filter</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="youtube-search-filter-toggle" checked>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      
+      <div class="toggle-container">
+        <span>YouTube Channel Filter</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="youtube-channel-filter-toggle" checked>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      
+      <div class="toggle-container">
+        <span>Auto-Close Tabs</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="auto-close-toggle" checked>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+      <hr>
+
+      <!-- API Key Section -->
+      <div class="api-key-section">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <label for="apiKeyInput" style="margin-bottom: 0;">Groq API Key</label>
+          <a href="https://console.groq.com/keys" target="_blank" style="font-size: 11px; color: var(--primary); text-decoration: none;">Get Key ↗</a>
+        </div>
+        <div class="api-input-group">
+          <input type="password" id="apiKeyInput" placeholder="gsk_...">
+          <button id="saveApiKeyBtn">Save</button>
+        </div>
+        <div id="apiKeyStatus"></div>
+      </div>
+    </div>
+
+    <script src="popup.js"></script>
+  </div>
+</body>
+
+</html>

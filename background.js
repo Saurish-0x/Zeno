@@ -1139,12 +1139,7 @@ function checkRelevance(url, siteInfo, keywords) {
   };
 }
 
-// Make sure we reload our data if a suspend operation is canceled
-chrome.runtime.onSuspendCancel.addListener(() => {
-  console.log('Suspension canceled - reloading data...');
-  isInitialized = false; // Reset initialization flag
-  loadEssentialData(); // Reload all data
-});
+
 
 // Add this function to verify keyword storage integrity
 function verifyKeywordStorage() {

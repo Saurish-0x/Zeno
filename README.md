@@ -115,11 +115,5 @@ This error happens because Firefox Manifest V3 does not support Service Workers 
 - **Firefox Compatibility**
   - Firefox treats background scripts differently from Chrome's Service Workers. We use a unified codebase, but ensure you use the correct manifest to load the right background environment.
 
-## Contributing
 
-Pull requests are welcome! For major changes, please open an issue first to discuss what you would like to change.
-
-## License
-
-[MIT](https://choosealicense.com/licenses/mit/)
 >>>>>>> master

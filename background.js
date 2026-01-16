@@ -8,7 +8,7 @@ let isInitialized = false; // Track if we've loaded data from storage
 const GROQ_CONFIG = {
   apiKey: '',
   baseUrl: 'https://api.groq.com/openai/v1/chat/completions',
-  model: 'qwen/qwen3-32b',
+  model: 'llama-3.3-70b-versatile',
   enabled: true,
   keywordsPerTask: 800, // Increased from 500 to 800 keywords for better coverage
   maxRetries: 3
@@ -196,7 +196,8 @@ async function loadEssentialData() {
       'customBlacklist',
       'customMixedDomains',
       'hiddenDefaultItems',
-      'rawGeminiResponse'
+      'rawGeminiResponse',
+      'customApiKey'
     ]);
 
     // Load task
@@ -841,7 +842,7 @@ No explanations. Start with [ end with ]`;
         'Authorization': `Bearer ${GROQ_CONFIG.apiKey}`
       },
       body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
+        model: GROQ_CONFIG.model,
         messages: [
           {
             role: 'system',

@@ -122,6 +122,19 @@ chrome.runtime.onInstalled.addListener((details) => {
   // by the top-level call below when the service worker starts up.
 });
 
+// Listen for storage changes to update configuration dynamically
+chrome.storage.onChanged.addListener((changes, namespace) => {
+  if (namespace === 'local') {
+    if (changes.customApiKey) {
+      GROQ_CONFIG.apiKey = changes.customApiKey.newValue || '';
+      console.log('API Key updated from storage change');
+    }
+    if (changes.autoCloseEnabled) {
+      RELEVANCE_CONFIG.autoCloseEnabled = changes.autoCloseEnabled.newValue;
+    }
+  }
+});
+
 // ALWAYS try to load data when the script starts (Service Worker wakes up)
 loadEssentialData();
 
@@ -365,6 +378,19 @@ async function processMessage(request, sender, sendResponse) {
 
     // Update blocking rules immediately when task changes
     updateBlockingRules();
+
+    // Ensure we have the latest API key if not already set
+    if (!GROQ_CONFIG.apiKey) {
+      try {
+        const data = await loadFromStorage(['customApiKey']);
+        if (data.customApiKey) {
+          GROQ_CONFIG.apiKey = data.customApiKey;
+          console.log('Lazy loaded API key before generation');
+        }
+      } catch (e) {
+        console.error('Failed to lazy load API key:', e);
+      }
+    }
 
     if (GROQ_CONFIG.enabled && GROQ_CONFIG.apiKey) {
       // Force regeneration by clearing cache for this task first

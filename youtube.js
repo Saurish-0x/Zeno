@@ -11,6 +11,9 @@ let isChannelPage = false; // Track if we're on a channel page
 let isShortsPage = false; // Track if we're on a Shorts page
 let searchFilterEnabled = true; // Track if filtering is enabled for search pages
 let channelFilterEnabled = true; // Track if filtering is enabled for channel pages
+let shortsHidden = true; // Track if Shorts should be hidden
+let subscriptionsHidden = true; // Track if Subscriptions should be hidden
+let strictMode = false; // Track if strict mode is enabled
 
 // Configuration for aggressive filtering
 const CONFIG = {
@@ -298,6 +301,55 @@ function initialize() {
         sendResponse({ reloading: false });
       }
     }
+    // Listen for shorts preference updates
+    else if (request.action === 'updateShortsPreference') {
+      shortsHidden = request.enabled;
+      console.log(`Shorts preference updated: ${shortsHidden ? 'hidden' : 'visible'}`);
+      if (shortsHidden) {
+        hideShorts();
+        showNotification('Shorts hidden', 1500, 'normal');
+      } else {
+        // To show shorts again, we might need to reload or remove injected styles
+        // For now, let's just reload if on a shorts page
+        if (isShortsPage) {
+          location.reload();
+        } else {
+          // Remove the hiding styles
+          const style = document.getElementById('neod-shorts-style');
+          if (style) style.remove();
+          showNotification('Shorts visible (refresh may be needed)', 1500, 'normal');
+        }
+      }
+      sendResponse({ success: true });
+    }
+    // Listen for subscriptions preference updates
+    else if (request.action === 'updateSubscriptionsPreference') {
+      subscriptionsHidden = request.enabled;
+      console.log(`Subscriptions preference updated: ${subscriptionsHidden ? 'hidden' : 'visible'}`);
+      if (subscriptionsHidden) {
+        hideSubscriptions();
+        showNotification('Subscriptions hidden', 1500, 'normal');
+      } else {
+        // Remove the hiding styles
+        const style = document.getElementById('neod-subscriptions-style');
+        if (style) style.remove();
+        showNotification('Subscriptions visible', 1500, 'normal');
+      }
+      sendResponse({ success: true });
+    }
+    // Listen for strict mode preference updates
+    else if (request.action === 'updateStrictModePreference') {
+      strictMode = request.enabled;
+      console.log(`Strict mode updated: ${strictMode ? 'enabled' : 'disabled'}`);
+      showNotification(`Strict Mode ${strictMode ? 'Enabled' : 'Disabled'}`, 1500, 'normal');
+
+      // Re-run filtering if enabled
+      if (strictMode && currentTask) {
+        resetAllVideoChecks();
+        filterVideosAggressively();
+      }
+      sendResponse({ success: true });
+    }
 
     return true; // Keep the message channel open for async response
   });
@@ -316,7 +368,43 @@ function loadSearchFilterPreference(callback) {
     }
 
     // Load channel filter preference after loading search filter preference
-    loadChannelFilterPreference(callback);
+    loadChannelFilterPreference(() => {
+      loadOtherPreferences(callback);
+    });
+  });
+}
+
+// Load other preferences (Shorts, Subscriptions, Strict Mode)
+function loadOtherPreferences(callback) {
+  chrome.storage.local.get(['shortsHidden', 'subscriptionsHidden', 'strictMode'], function (result) {
+    if (result.hasOwnProperty('shortsHidden')) {
+      shortsHidden = result.shortsHidden;
+    } else {
+      shortsHidden = true; // Default to hidden
+      chrome.storage.local.set({ shortsHidden: true });
+    }
+
+    if (result.hasOwnProperty('subscriptionsHidden')) {
+      subscriptionsHidden = result.subscriptionsHidden;
+    } else {
+      subscriptionsHidden = true; // Default to hidden
+      chrome.storage.local.set({ subscriptionsHidden: true });
+    }
+
+    if (result.hasOwnProperty('strictMode')) {
+      strictMode = result.strictMode;
+    } else {
+      strictMode = false; // Default to off
+      chrome.storage.local.set({ strictMode: false });
+    }
+
+    console.log(`Loaded preferences: Shorts=${shortsHidden}, Subs=${subscriptionsHidden}, Strict=${strictMode}`);
+
+    // Apply initial hiding
+    if (shortsHidden) hideShorts();
+    if (subscriptionsHidden) hideSubscriptions();
+
+    if (callback) callback();
   });
 }
 
@@ -853,6 +941,72 @@ function updatePageDetection() {
   console.log(`Page detection: Search=${isSearchPage}, Channel=${isChannelPage}, Shorts=${isShortsPage}`);
 }
 
+// Function to hide Shorts elements
+function hideShorts() {
+  if (!shortsHidden) return;
+
+  console.log('Hiding Shorts elements');
+
+  // Inject CSS to hide Shorts
+  if (!document.getElementById('neod-shorts-style')) {
+    const style = document.createElement('style');
+    style.id = 'neod-shorts-style';
+    style.textContent = `
+      /* Hide Shorts shelves */
+      ytd-rich-shelf-renderer[is-shorts], 
+      ytd-reel-shelf-renderer, 
+      ytd-shorts, 
+      ytd-mini-guide-entry-renderer[aria-label="Shorts"], 
+      ytd-guide-entry-renderer[title="Shorts"],
+      a[title="Shorts"],
+      a[href^="/shorts"],
+      ytd-notification-renderer:has(a[href^="/shorts"]) {
+        display: none !important;
+      }
+      
+      /* Hide Shorts tab in channel page */
+      yt-tab-shape[tab-title="Shorts"] {
+        display: none !important;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  // If we are on a shorts page, redirect to home
+  if (isShortsPage) {
+    console.log('On Shorts page - redirecting to home');
+    location.href = '/';
+  }
+}
+
+// Function to hide Subscriptions elements
+function hideSubscriptions() {
+  if (!subscriptionsHidden) return;
+
+  console.log('Hiding Subscriptions elements');
+
+  // Inject CSS to hide Subscriptions
+  if (!document.getElementById('neod-subscriptions-style')) {
+    const style = document.createElement('style');
+    style.id = 'neod-subscriptions-style';
+    style.textContent = `
+      /* Hide Subscriptions link in sidebar */
+      ytd-guide-entry-renderer:has(a[href="/feed/subscriptions"]),
+      ytd-mini-guide-entry-renderer[aria-label="Subscriptions"],
+      a[href="/feed/subscriptions"] {
+        display: none !important;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  // If we are on subscriptions page, redirect to home
+  if (location.href.includes('/feed/subscriptions')) {
+    console.log('On Subscriptions page - redirecting to home');
+    location.href = '/';
+  }
+}
+
 // Function to apply pre-emptive blur immediately
 function applyPreemptiveBlur() {
   if (!currentTask || !searchFilterEnabled) return;
@@ -1054,9 +1208,20 @@ function checkRelevanceLocally(title, task, description = '') {
   // Final Decision
   // If score is positive, it's likely relevant.
   // If score is negative, it's likely irrelevant.
-  // If score is 0, we're unsure (but default to irrelevant for strictness, or relevant for leniency?)
-  // User asked for "obvious videos" to be allowed, so let's be slightly lenient.
 
+  // Strict Mode Logic
+  if (strictMode) {
+    console.log(`Strict Mode Check: Score ${score}`);
+    // In strict mode, we need a higher confidence to show the video
+    if (score >= 5) {
+      return { isDecisive: true, isRelevant: true };
+    } else {
+      // Block everything else
+      return { isDecisive: true, isRelevant: false };
+    }
+  }
+
+  // Normal Mode Logic
   if (score > 0) {
     return { isDecisive: true, isRelevant: true };
   } else if (score < -5) {
@@ -1107,12 +1272,25 @@ async function checkRelevance(videoInfo) {
         console.log(`Adjusting rate limits due to errors: delay=${CONFIG.processingDelay}ms, batch=${CONFIG.batchSize}`);
       }
 
+      // In strict mode, block if API fails
+      if (strictMode) {
+        console.log('Strict Mode: Blocking video due to API error');
+        return { isRelevant: false };
+      }
+
       return { isRelevant: true }; // Default to showing the video
     }
 
     return response;
   } catch (error) {
     console.error('Error checking relevance:', error);
+
+    // In strict mode, block if API fails
+    if (strictMode) {
+      console.log('Strict Mode: Blocking video due to API error');
+      return { isRelevant: false };
+    }
+
     // Default to showing the video if there's an error
     return { isRelevant: true };
   }
@@ -1337,7 +1515,14 @@ function addOverlayToVideo(videoElement) {
   // Add an overlay with explanation
   const overlay = document.createElement('div');
   overlay.className = 'neod-irrelevant-overlay';
-  overlay.innerHTML = '<span>Not relevant to your current task</span>';
+
+  // Create content container
+  const content = document.createElement('span');
+  content.innerHTML = `
+    <div class="neod-overlay-icon">🔒</div>
+    <div>Not relevant to your task</div>
+  `;
+  overlay.appendChild(content);
 
   // Add action button to reveal if needed
   const revealBtn = document.createElement('button');
@@ -1387,7 +1572,8 @@ function addOverlayToVideo(videoElement) {
     if (e.target !== revealBtn) e.stopPropagation();
   }, true);
 
-  // Style the overlay with direct styles for immediate effect
+  // Style the overlay with direct styles for immediate effect (fallback)
+  // The class styles will override these if injected correctly
   Object.assign(overlay.style, {
     position: 'absolute',
     top: '0',
@@ -1398,10 +1584,6 @@ function addOverlayToVideo(videoElement) {
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.75)',
-    color: 'white',
-    fontWeight: 'bold',
-    textAlign: 'center',
     zIndex: '1000',
     pointerEvents: 'auto'
   });
@@ -1885,26 +2067,81 @@ function injectStyles() {
         transition: opacity 0.3s ease, filter 0.3s ease !important;
     }
     
-    /* Overlay styling */
+    /* Overlay styling - Premium Glassmorphism */
     .neod-irrelevant-overlay {
       position: absolute; top: 0; left: 0; width: 100%; height: 100%;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
-      background-color: rgba(0, 0, 0, 0.75); color: white; font-weight: bold; text-align: center; z-index: 1000;
-      font-size: 14px; padding:5px;
+      background-color: rgba(20, 20, 20, 0.6); /* Semi-transparent dark */
+      backdrop-filter: blur(12px); /* Strong blur for glass effect */
+      -webkit-backdrop-filter: blur(12px);
+      color: white; 
+      font-weight: 500; 
+      text-align: center; 
+      z-index: 1000;
+      font-size: 14px; 
+      padding: 20px;
       pointer-events: auto !important;
+      border-radius: 12px; /* Rounded corners */
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1); /* Subtle inner border */
+      transition: all 0.3s ease;
     }
-    .neod-irrelevant-overlay span { margin-bottom: 8px; }
+    
+    /* Ensure overlay respects parent border radius */
+    ytd-video-renderer, ytd-grid-video-renderer, ytd-rich-item-renderer {
+      border-radius: 12px;
+      overflow: hidden; /* Clip overlay to rounded corners */
+    }
+
+    .neod-irrelevant-overlay span { 
+      margin-bottom: 16px; 
+      font-family: "Roboto", "Arial", sans-serif;
+      letter-spacing: 0.5px;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    /* Icon styling */
+    .neod-overlay-icon {
+      font-size: 24px;
+      margin-bottom: 4px;
+      opacity: 0.8;
+    }
+
     .neod-reveal-btn {
-      padding: 5px 10px; background: rgba(255,255,255,0.2); border: 1px solid white;
-      color: white; border-radius: 4px; cursor: pointer; font-size: 12px;
+      padding: 8px 20px; 
+      background: rgba(255, 255, 255, 0.1); 
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: white; 
+      border-radius: 20px; /* Pill shape */
+      cursor: pointer; 
+      font-size: 13px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      backdrop-filter: blur(4px);
     }
-    .neod-reveal-btn:hover { background: rgba(255,255,255,0.4); }
+    
+    .neod-reveal-btn:hover { 
+      background: rgba(255, 255, 255, 0.25); 
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+    
+    .neod-reveal-btn:active {
+      transform: translateY(0);
+    }
     
     /* Notification styles */
     #neod-youtube-notification { 
-        position: fixed; bottom: 70px; right: 20px; background-color: rgba(0,0,0,0.85); 
-        color: #fff; padding: 10px 15px; border-radius: 5px; z-index: 9999; 
-        font-size: 14px; opacity: 0.95; transition: opacity 0.5s ease; box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+        position: fixed; bottom: 70px; right: 20px; background-color: rgba(30, 30, 30, 0.9); 
+        color: #fff; padding: 12px 18px; border-radius: 8px; z-index: 9999; 
+        font-size: 14px; opacity: 0.95; transition: opacity 0.5s ease; 
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        border: 1px solid rgba(255,255,255,0.1);
+        backdrop-filter: blur(8px);
+        font-weight: 500;
     }
   `;
 
@@ -1922,6 +2159,10 @@ function setupPeriodicChecks() {
 
   // Set up a less aggressive periodic check
   periodicCheckInterval = setInterval(() => {
+    // Apply hiding logic periodically
+    if (shortsHidden) hideShorts();
+    if (subscriptionsHidden) hideSubscriptions();
+
     if (!currentTask) return;
 
     // Skip if filtering is disabled for this page type

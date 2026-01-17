@@ -15,6 +15,9 @@ document.addEventListener('DOMContentLoaded', function () {
     // Youtube settings
     youtubeSearchToggle: document.getElementById('youtube-search-filter-toggle'),
     youtubeChannelToggle: document.getElementById('youtube-channel-filter-toggle'),
+    youtubeShortsToggle: document.getElementById('youtube-shorts-toggle'),
+    youtubeSubscriptionsToggle: document.getElementById('youtube-subscriptions-toggle'),
+    strictModeToggle: document.getElementById('strict-mode-toggle'),
     youtubeStatus: document.getElementById('youtube-filter-status'),
     // Auto-Close & API Key
     autoCloseToggle: document.getElementById('auto-close-toggle'),
@@ -45,12 +48,21 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     // Load settings
-    chrome.storage.local.get(['searchFilterEnabled', 'channelFilterEnabled', 'autoCloseEnabled', 'customApiKey'], function (result) {
+    chrome.storage.local.get(['searchFilterEnabled', 'channelFilterEnabled', 'shortsHidden', 'subscriptionsHidden', 'strictMode', 'autoCloseEnabled', 'customApiKey'], function (result) {
       if (elements.youtubeSearchToggle) {
         elements.youtubeSearchToggle.checked = result.hasOwnProperty('searchFilterEnabled') ? result.searchFilterEnabled : true;
       }
       if (elements.youtubeChannelToggle) {
         elements.youtubeChannelToggle.checked = result.hasOwnProperty('channelFilterEnabled') ? result.channelFilterEnabled : true;
+      }
+      if (elements.youtubeShortsToggle) {
+        elements.youtubeShortsToggle.checked = result.hasOwnProperty('shortsHidden') ? result.shortsHidden : true;
+      }
+      if (elements.youtubeSubscriptionsToggle) {
+        elements.youtubeSubscriptionsToggle.checked = result.hasOwnProperty('subscriptionsHidden') ? result.subscriptionsHidden : true;
+      }
+      if (elements.strictModeToggle) {
+        elements.strictModeToggle.checked = result.hasOwnProperty('strictMode') ? result.strictMode : false;
       }
       if (elements.autoCloseToggle) {
         elements.autoCloseToggle.checked = result.hasOwnProperty('autoCloseEnabled') ? result.autoCloseEnabled : true;
@@ -92,7 +104,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         elements.startTaskBtn.disabled = true;
         elements.taskInput.disabled = true;
-        
+
         // Start polling for updates
         pollGenerationStatus();
       }
@@ -161,7 +173,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         // Check for API key first
-        chrome.storage.local.get(['customApiKey'], function(result) {
+        chrome.storage.local.get(['customApiKey'], function (result) {
           if (!result.customApiKey && !elements.apiKeyInput.value.trim()) {
             showStatus('Please save your Groq API Key first', false, elements.statusTask);
             return;
@@ -170,7 +182,7 @@ document.addEventListener('DOMContentLoaded', function () {
           showStatus('Starting task...', true, elements.statusTask);
           elements.startTaskBtn.disabled = true;
           elements.taskInput.disabled = true;
-  
+
           chrome.runtime.sendMessage({
             action: 'forceGenerateKeywords',
             task: taskValue
@@ -181,7 +193,7 @@ document.addEventListener('DOMContentLoaded', function () {
               showStatus('Error: ' + chrome.runtime.lastError.message, false, elements.statusTask);
               return;
             }
-  
+
             if (response && response.started) {
               // Generation started in background - start polling
               showStatus('Generating keywords...', true, elements.statusTask);
@@ -203,12 +215,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Stop Task
     if (elements.stopTaskBtn) {
-      elements.stopTaskBtn.addEventListener('click', function() {
-        chrome.runtime.sendMessage({ action: 'stopTask' }, function(response) {
+      elements.stopTaskBtn.addEventListener('click', function () {
+        chrome.runtime.sendMessage({ action: 'stopTask' }, function (response) {
           if (response && response.success) {
-             elements.taskInput.value = '';
-             updateUIState(false);
-             showStatus('Task stopped', true, elements.statusTask);
+            elements.taskInput.value = '';
+            updateUIState(false);
+            showStatus('Task stopped', true, elements.statusTask);
           }
         });
       });
@@ -216,30 +228,63 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // YouTube Filter Toggles
     if (elements.youtubeSearchToggle) {
-      elements.youtubeSearchToggle.addEventListener('change', function() {
+      elements.youtubeSearchToggle.addEventListener('change', function () {
         const enabled = this.checked;
         chrome.storage.local.set({ searchFilterEnabled: enabled });
-        chrome.runtime.sendMessage({ 
-          action: 'updateSearchFilterPreference', 
-          enabled: enabled 
+        chrome.runtime.sendMessage({
+          action: 'updateSearchFilterPreference',
+          enabled: enabled
         });
       });
     }
 
     if (elements.youtubeChannelToggle) {
-      elements.youtubeChannelToggle.addEventListener('change', function() {
+      elements.youtubeChannelToggle.addEventListener('change', function () {
         const enabled = this.checked;
         chrome.storage.local.set({ channelFilterEnabled: enabled });
-        chrome.runtime.sendMessage({ 
-          action: 'updateChannelFilterPreference', 
-          enabled: enabled 
+        chrome.runtime.sendMessage({
+          action: 'updateChannelFilterPreference',
+          enabled: enabled
+        });
+      });
+    }
+
+    if (elements.youtubeShortsToggle) {
+      elements.youtubeShortsToggle.addEventListener('change', function () {
+        const enabled = this.checked;
+        chrome.storage.local.set({ shortsHidden: enabled });
+        chrome.runtime.sendMessage({
+          action: 'updateShortsPreference',
+          enabled: enabled
+        });
+      });
+    }
+
+    if (elements.youtubeSubscriptionsToggle) {
+      elements.youtubeSubscriptionsToggle.addEventListener('change', function () {
+        const enabled = this.checked;
+        chrome.storage.local.set({ subscriptionsHidden: enabled });
+        chrome.runtime.sendMessage({
+          action: 'updateSubscriptionsPreference',
+          enabled: enabled
+        });
+      });
+    }
+
+    if (elements.strictModeToggle) {
+      elements.strictModeToggle.addEventListener('change', function () {
+        const enabled = this.checked;
+        chrome.storage.local.set({ strictMode: enabled });
+        chrome.runtime.sendMessage({
+          action: 'updateStrictModePreference',
+          enabled: enabled
         });
       });
     }
 
     // Auto-Close Toggle
     if (elements.autoCloseToggle) {
-      elements.autoCloseToggle.addEventListener('change', function() {
+      elements.autoCloseToggle.addEventListener('change', function () {
         const enabled = this.checked;
         chrome.storage.local.set({ autoCloseEnabled: enabled });
         chrome.runtime.sendMessage({
@@ -251,9 +296,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // API Key Save
     if (elements.saveApiKeyBtn) {
-      elements.saveApiKeyBtn.addEventListener('click', function() {
+      elements.saveApiKeyBtn.addEventListener('click', function () {
         const apiKey = elements.apiKeyInput.value.trim();
-        chrome.storage.local.set({ customApiKey: apiKey }, function() {
+        chrome.storage.local.set({ customApiKey: apiKey }, function () {
           if (chrome.runtime.lastError) {
             elements.apiKeyStatus.textContent = 'Error saving key';
             elements.apiKeyStatus.style.color = '#ef4444';

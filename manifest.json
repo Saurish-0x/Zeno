@@ -20,6 +20,12 @@
     "webNavigation",
     "declarativeNetRequest"
   ],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "zeno-extension@example.com",
+      "strict_min_version": "109.0"
+    }
+  },
   "web_accessible_resources": [
     {
       "resources": [
@@ -32,11 +38,12 @@
   ],
   "host_permissions": [
     "https://generativelanguage.googleapis.com/*",
-    "https://api.groq.com/*",
     "<all_urls>"
   ],
   "background": {
-    "service_worker": "background.js"
+    "scripts": [
+      "background.js"
+    ]
   },
   "content_scripts": [
     {

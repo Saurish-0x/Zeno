@@ -60,7 +60,7 @@
       letter-spacing: 0.05em;
     }
 
-    input[type="text"], 
+    input[type="text"],
     input[type="password"] {
       width: 100%;
       padding: 10px 12px;
@@ -101,7 +101,7 @@
     #stop-task-btn {
       background-color: var(--danger);
     }
-    
+
     #stop-task-btn:hover {
       background-color: var(--danger-hover);
     }
@@ -160,7 +160,7 @@
       text-align: center;
       margin-top: 6px;
     }
-    
+
     /* Toggle switch styles */
     .toggle-container {
       display: flex;
@@ -244,7 +244,7 @@
       padding: 0 16px;
       background-color: #374151;
     }
-    
+
     #saveApiKeyBtn:hover {
       background-color: #1f2937;
     }
@@ -262,7 +262,9 @@
   <div class="container">
     <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 4px;">
       <h1>Zeno</h1>
-      <span style="font-size: 10px; font-weight: 700; background: #e0e7ff; color: var(--primary); padding: 2px 6px; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.05em;">Beta V.10</span>
+      <span
+        style="font-size: 10px; font-weight: 700; background: #e0e7ff; color: var(--primary); padding: 2px 6px; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.05em;">Beta
+        V.10</span>
     </div>
 
     <!-- Task Section -->
@@ -270,12 +272,12 @@
       <h2>Current Task</h2>
       <input type="text" id="task" placeholder="What are you working on?">
       <div class="keyword-stats" id="keyword-stats"></div>
-      
+
       <div id="action-buttons">
         <button id="start-task-btn">Start Task</button>
         <button id="stop-task-btn" style="display: none;">Stop Task</button>
       </div>
-      
+
       <!-- Progress Bar -->
       <div id="progress-container" style="display: none;">
         <div class="progress-track">
@@ -289,7 +291,7 @@
     <!-- Zeno Settings -->
     <div class="section">
       <h2>Settings</h2>
-      
+
       <div class="toggle-container">
         <span>YouTube Search Filter</span>
         <label class="toggle-switch">
@@ -297,7 +299,7 @@
           <span class="toggle-slider"></span>
         </label>
       </div>
-      
+
       <div class="toggle-container">
         <span>YouTube Channel Filter</span>
         <label class="toggle-switch">
@@ -305,7 +307,31 @@
           <span class="toggle-slider"></span>
         </label>
       </div>
-      
+
+      <div class="toggle-container">
+        <span>Hide Shorts</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="youtube-shorts-toggle" checked>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+      <div class="toggle-container">
+        <span>Hide Subscriptions</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="youtube-subscriptions-toggle" checked>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+      <div class="toggle-container">
+        <span>Strict Mode</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="strict-mode-toggle">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
       <div class="toggle-container">
         <span>Auto-Close Tabs</span>
         <label class="toggle-switch">
@@ -320,7 +346,8 @@
       <div class="api-key-section">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
           <label for="apiKeyInput" style="margin-bottom: 0;">Groq API Key</label>
-          <a href="https://console.groq.com/keys" target="_blank" style="font-size: 11px; color: var(--primary); text-decoration: none;">Get Key ↗</a>
+          <a href="https://console.groq.com/keys" target="_blank"
+            style="font-size: 11px; color: var(--primary); text-decoration: none;">Get Key ↗</a>
         </div>
         <div class="api-input-group">
           <input type="password" id="apiKeyInput" placeholder="gsk_...">
